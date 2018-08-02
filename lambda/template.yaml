@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Reads messages from a queue and writes them to dynamo db
+
+Parameters:
+    Type: String
+  EnviromentName:
+    Type: String
+
+Resources:
+
+  # The queue to read the messages from
+  InboundSQSQueue:
+    Type: AWS::SQS::Queue
+    Properties: 
+      QueueName: !Sub "${EnviromentName}-ToDynamo"
+
+  # The table to write the messages to
+  DestinationDynamoTable:
+    Type: "AWS::DynamoDB::Table"
+
+    Properties:
+      TableName: !Sub "${Environment}-DestinationDynamoTable"
+      AttributeDefinitions:
+      -
+        AttributeName: "id"
+        AttributeType: "S"
+
+      KeySchema:
+      -
+        AttributeName: "id"
+        KeyType: "HASH"
+
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  # Function to process inbound queue messages and write them to a dynamo db table
+  FromSqsToDynamoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      MemorySize: 512
+      Timeout: 180
+      FunctionName: !Sub "${EnviromentName}-FromSqsToDynamoFunction"
+      Handler: demo.serverless.lambda.FromSqsToDynamoFunction
+      Runtime: java8
+      CodeUri: ./build/distributions/dynamo-1.0.zip
+
+      Events:
+        InboundSqsEvent:
+          Type: SQS
+	      Properties:
+            Topic: !Ref InboundSQSQueue
+
+      # Pass through reference to the table so lambda knows where to send it
+      Environment:
+        Variables:
+          outboundDynamoTable: !Ref DestinationDynamoTable
+

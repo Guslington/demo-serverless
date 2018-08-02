@@ -1,0 +1,9 @@
+version: '3.6'
+
+services:
+
+  demo:
+    build: .
+    image: guslington/demo-serverless
+    ports:
+      - 7000
