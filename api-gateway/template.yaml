@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: API Endpoint
+
+Parameters:
+    Environment:
+        Type: String
+
+Resources:
+  MyApi:
+    Type: AWS::Serverless::Api
+    Properties:
+        StageName: Prod
+        DefinitionBody:
+            swagger: 2.0
+            info:
+              title:
+                Ref: AWS::StackName
+
+            # Root path
+
+            paths:
+              "/":
+                post:
+                  x-amazon-apigateway-integration:
+                    httpMethod: POST
+                    type: aws_proxy
+                    uri:
+                      Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiProcessFunctionFunction.Arn}/invocations
+                  responses: {}
+
+  ApiProcessFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${Environment}-ApiProcessFunction"
+      Handler: demo.ApiProcessFunction
+      Runtime: java8
+      MemorySize: 512
+      Environment:
+        Variables:
+          Environment: !Sub "${Environment}"
+          Region: !Ref 'AWS::Region'
+
+      Timeout: 30
+      
+      CodeUri: ./build/distributions/endpoint-function-1.0-SNAPSHOT.zip
+      Events:
+        GetApi:
+          Type: Api
+          Properties:
+            Path: /get
+            Method: GET
+            RestApiId: 
+                Ref: MyApi
+
+  ConfigLambdaPermission:
+    Type: "AWS::Lambda::Permission"
+    DependsOn:
+    - MyApi
+    - ApiProcessFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ApiProcessFunction
+      Principal: apigateway.amazonaws.com
