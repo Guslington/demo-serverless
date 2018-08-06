@@ -52,5 +52,5 @@ Resources:
       # Pass through reference to the table so lambda knows where to send it
       Environment:
         Variables:
-          outboundDynamoTable: !Ref DestinationDynamoTable
+          OutboundDynamoTable: !Ref DestinationDynamoTable
 
