@@ -29,6 +29,10 @@ fun main(args: Array<String>) {
 
     app.routes {
 
+        // healthcheck
+        get("/healthcheck" { ctx ->
+            ctx.status(200)
+        })
 
         // publishes a message to sqs
         post("/sqs/publish") { ctx ->

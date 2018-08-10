@@ -9,9 +9,9 @@ class DynamoDao(private val region: String) {
     fun insert(tableName: String, row: DynamoRow) : Boolean {
 
         val dynamoClient = AmazonDynamoDBAsyncClientBuilder
-                .standard()
-                .withRegion(region)
-                .build()
+                        .standard()
+                        .withRegion(region)
+                        .build()
 
         val values = row.values.mapValues { AttributeValue(it.value) }
 
